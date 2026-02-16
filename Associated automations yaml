@@ -1,0 +1,42 @@
+alias: Bin reminder (7am day before, calendar trigger)
+description: Remind at 7am the day before the next bin collection all-day event.
+triggers:
+  - entity_id: calendar.amber_valley_borough_council
+    event: start
+    offset: "-17:00:00"
+    trigger: calendar
+actions:
+  - variables:
+      bin_type: |-
+        {{ trigger.calendar_event.summary
+           if trigger is defined and trigger.calendar_event is defined
+           else (state_attr('sensor.bin_day_sensor','bin_type') or 'Bin') }}
+      bt: "{{ (bin_type or '') | lower }}"
+      icon: >-
+        {% set icon = '🗑️' %} {% if 'recycl' in bt %}{% set icon = '⬜♻️' %} {%
+        elif 'refuse' in bt %}{% set icon = '🟩🗑️' %} {% elif 'garden' in bt
+        %}{% set icon = '🟫🌿' %} {% endif %} {{ icon }}
+  - target:
+      entity_id: input_boolean.bin_notification
+    action: input_boolean.turn_on
+  - data:
+      notification_id: bin_out_reminder
+      title: "{{ icon }} Bin day tomorrow — {{ bin_type }}"
+      message: Don’t forget to put the **{{ bin_type }}** bin out.
+    action: persistent_notification.create
+  - data:
+      title: Have you put the {{ bin_type }} bin out?
+      message: It’s bin day tomorrow. Don’t forget to put the {{ bin_type }} bin out.
+      data:
+        timeout: 108000
+        importance: high
+        persistent: true
+        sticky: true
+        tag: bin_out_reminder
+        actions:
+          - action: clear_notification
+            title: Okay - I've done it
+    action: notify.mobile_app_pixel_6_pro
+mode: single
+
+
