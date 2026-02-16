@@ -1,0 +1,62 @@
+type: custom:mushroom-template-card
+primary: "{{ state_attr('sensor.bin_day_sensor', 'bin_type') }}"
+secondary: "{{ states('sensor.bin_day_sensor') }}"
+icon: "{{ state_attr('sensor.bin_day_sensor', 'icon') }}"
+entity: sensor.bin_day
+vertical: true
+features_position: bottom
+color: "{{ state_attr('sensor.bin_day_sensor', 'bin_color') }}"
+badge_icon: |2-
+    {% if is_state('input_boolean.bin_notification', 'on') %}
+      mdi:bell
+    {% else %}
+      {% set cleared = states('input_datetime.bin_notification_cleared') %}
+      {% set cleared_ts = as_timestamp(cleared, default=0) %}
+      {% if cleared_ts > 0 and (as_timestamp(now()) - cleared_ts) < 86400 %}
+        mdi:check-circle
+      {% endif %}
+    {% endif %}
+badge_color: |2-
+    {% if is_state('input_boolean.bin_notification', 'on') %}
+      orange
+    {% else %}
+      {% set cleared_ts = as_timestamp(states('input_datetime.bin_notification_cleared'), default=0) %}
+      {% if cleared_ts > 0 and (as_timestamp(now()) - cleared_ts) < 86400 %}
+        green
+      {% endif %}
+    {% endif %}
+card_mod:
+  style:
+    ha-tile-icon$: |
+      .container {
+        position: relative;
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background-color: {{ state_attr('sensor.bin_day_sensor', 'bin_color') }} !important;
+        opacity: 0.3;
+        z-index: 0;
+      }
+      ha-state-icon, ha-icon {
+        color: white !important;
+        position: relative;
+        z-index: 1;
+      }
+    .: |
+      ha-tile-icon {
+        --mdc-icon-size: 40px !important;
+      }
+      ha-card {
+        background: none !important;
+        box-shadow: none !important;
+      }
+      
