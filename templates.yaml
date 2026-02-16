@@ -1,0 +1,66 @@
+# --- Bin Day Sensor ---
+- sensor:
+    - name: "Bin Day Sensor"
+      unique_id: bin_day_sensor
+      state: >
+        {% set event_date_str = state_attr('calendar.amber_valley_borough_council', 'start_date') %}
+        {% if not event_date_str %}
+          {% set event_date_str = (state_attr('calendar.amber_valley_borough_council', 'start_time')
+            | as_timestamp
+            | timestamp_custom('%Y-%m-%d')) %}
+        {% endif %}
+
+        {% set event_date = strptime(event_date_str, '%Y-%m-%d').date() %}
+        {% set today_date = now().date() %}
+        {% set delta = (event_date - today_date).days %}
+
+        {{ 'Today!' if delta == 0 else 'Tomorrow' if delta == 1 else 'In {} Days'.format(delta) if delta > 1 else 'Event has passed' }}
+
+      icon: >
+        {% set raw_bin = (
+          state_attr('calendar.amber_valley_borough_council', 'message')
+          or state_attr('calendar.amber_valley_borough_council', 'summary')
+          or ''
+        ) | upper %}
+        {% if raw_bin == 'REFUSE' %}
+          mdi:trash-can-outline
+        {% elif raw_bin == 'RECYCLING' %}
+          mdi:recycle
+        {% elif raw_bin == 'GREEN' %}
+          mdi:flower
+        {% else %}
+          mdi:calendar
+        {% endif %}
+
+      attributes:
+        bin_type: >
+          {% set raw_bin = (
+            state_attr('calendar.amber_valley_borough_council', 'message')
+            or state_attr('calendar.amber_valley_borough_council', 'summary')
+            or ''
+          ) | upper %}
+          {% if raw_bin == 'REFUSE' %}
+            Refuse
+          {% elif raw_bin == 'RECYCLING' %}
+            Recycling
+          {% elif raw_bin == 'GREEN' %}
+            Garden
+          {% else %}
+            Unknown
+          {% endif %}
+
+        bin_color: >
+          {% set raw_bin = (
+            state_attr('calendar.amber_valley_borough_council', 'message')
+            or state_attr('calendar.amber_valley_borough_council', 'summary')
+            or ''
+          ) | upper %}
+          {% if raw_bin == 'REFUSE' %}
+            green
+          {% elif raw_bin == 'RECYCLING' %}
+            grey
+          {% elif raw_bin == 'GREEN' %}
+            brown
+          {% else %}
+            blue
+          {% endif %}
